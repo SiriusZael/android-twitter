@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # RestClientTemplate
 
 ## Overview
@@ -265,3 +266,7 @@ You can log out by clearing the access token at any time through the client obje
 RestClient client = RestApplication.getRestClient();
 client.clearAccessToken();
 ```
+=======
+# android-twitter
+my twitter app
+>>>>>>> 2d7c8b814f416d994fc2883f1e4aed05932d0502

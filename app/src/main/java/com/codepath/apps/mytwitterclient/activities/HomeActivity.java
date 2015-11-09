@@ -2,6 +2,7 @@ package com.codepath.apps.mytwitterclient.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -24,7 +25,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 
 public class HomeActivity extends AppCompatActivity {
-
+    private SwipeRefreshLayout swipeContainer;
     private TwitterClient client;
     private TweetsAdapter aTweets;
     private ArrayList<Tweet> tweets;
@@ -56,6 +57,18 @@ public class HomeActivity extends AppCompatActivity {
                 return true;
             }
         });
+        swipeContainer = (SwipeRefreshLayout) findViewById(R.id.swipeContainer);
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                populateTimeline();
+            }
+        });
+        swipeContainer.setColorSchemeResources(android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light);
+
         client = TwitterApplication.getRestClient();
 
         populateTimeline();
@@ -64,11 +77,15 @@ public class HomeActivity extends AppCompatActivity {
     private JsonHttpResponseHandler responseHandler = new JsonHttpResponseHandler() {
         @Override
         public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+            swipeContainer.setRefreshing(false);
+
             super.onFailure(statusCode, headers, throwable, errorResponse);
         }
 
         @Override
         public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+            swipeContainer.setRefreshing(false);
+
             ArrayList<Tweet> newTweets = Tweet.fromJSONArray(response);
             if (sinceId == 1 || newTweets.get(0).getUid() > sinceId) {
                 sinceId = newTweets.get(0).getUid();

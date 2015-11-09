@@ -74,29 +74,6 @@ public class HomeActivity extends AppCompatActivity {
         populateTimeline();
     }
 
-    private JsonHttpResponseHandler responseHandler = new JsonHttpResponseHandler() {
-        @Override
-        public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
-            swipeContainer.setRefreshing(false);
-
-            super.onFailure(statusCode, headers, throwable, errorResponse);
-        }
-
-        @Override
-        public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
-            swipeContainer.setRefreshing(false);
-
-            ArrayList<Tweet> newTweets = Tweet.fromJSONArray(response);
-            if (sinceId == 1 || newTweets.get(0).getUid() > sinceId) {
-                sinceId = newTweets.get(0).getUid();
-            }
-            maxId = newTweets.get(newTweets.size() - 1).getUid() - 1;
-            aTweets.addAll(newTweets);
-            aTweets.notifyDataSetChanged();
-            super.onSuccess(statusCode, headers, response);
-        }
-    };
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -120,15 +97,69 @@ public class HomeActivity extends AppCompatActivity {
     @Override
      protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == COMPOSE_TWEET_REQUEST && resultCode == RESULT_OK) {
-            System.out.println(data.getStringExtra("tweetBody"));
+            client.postTweet(data.getStringExtra("tweetBody"), new JsonHttpResponseHandler() {
+                @Override
+                public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+                    super.onFailure(statusCode, headers, throwable, errorResponse);
+                }
+
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                    Tweet postedTweet = Tweet.fromJSON(response);
+                    aTweets.insert(postedTweet, 0);
+                    aTweets.notifyDataSetChanged();
+                    super.onSuccess(statusCode, headers, response);
+                }
+            });
         }
     }
 
     private void populateTimeline() {
-        client.getHomeTimeline(responseHandler);
+        client.getHomeTimeline(new JsonHttpResponseHandler() {
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+                swipeContainer.setRefreshing(false);
+
+                super.onFailure(statusCode, headers, throwable, errorResponse);
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                swipeContainer.setRefreshing(false);
+
+                ArrayList<Tweet> newTweets = Tweet.fromJSONArray(response);
+                sinceId = newTweets.get(0).getUid();
+                maxId = newTweets.get(newTweets.size() - 1).getUid() - 1;
+                aTweets.clear();
+                aTweets.addAll(newTweets);
+                aTweets.notifyDataSetChanged();
+                super.onSuccess(statusCode, headers, response);
+            }
+        });
     }
 
     private void loadMoreData() {
-        client.getNextHomeTimeline(maxId, responseHandler);
+        client.getNextHomeTimeline(maxId, new JsonHttpResponseHandler() {
+            @Override
+            public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+                swipeContainer.setRefreshing(false);
+
+                super.onFailure(statusCode, headers, throwable, errorResponse);
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONArray response) {
+                swipeContainer.setRefreshing(false);
+
+                ArrayList<Tweet> newTweets = Tweet.fromJSONArray(response);
+                if (newTweets.get(0).getUid() > sinceId) {
+                    sinceId = newTweets.get(0).getUid();
+                }
+                maxId = newTweets.get(newTweets.size() - 1).getUid() - 1;
+                aTweets.addAll(newTweets);
+                aTweets.notifyDataSetChanged();
+                super.onSuccess(statusCode, headers, response);
+            }
+        });
     }
 }

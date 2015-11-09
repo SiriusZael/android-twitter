@@ -5,5 +5,9 @@
     <string name="title_activity_timeline">Home Timeline</string>
     <string name="login_label">Connect to Twitter</string>
     <string name="user_handle">\@%s</string>
+    <string name="home">Home</string>
+    <string name="tweet">Tweet</string>
+    <string name="tweet_hint">What\'s happening?</string>
+    <string name="default_char_count">140</string>
 
 </resources>
